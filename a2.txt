@@ -1,0 +1,259 @@
+using System;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+
+ namespace ATM_TESTS {
+
+    [Serializable]
+    class Person {
+
+        string First_name, Last_name;
+        public Person() {
+            First_name =""; Last_name = "";
+        }
+        public Person(string First_name, string Last_name) {
+            setAll(First_name, Last_name);
+        }
+        public void setAll(string First_name, string Last_name) {
+            this.First_name = First_name;
+            this.Last_name  = Last_name;
+        }
+        public void set_First_name(string First_name) {
+            this.First_name = First_name;
+        }
+        public void set_Last_name(string Last_name) {
+            this.Last_name = Last_name;
+        }
+        
+        public string get_First_name() {
+            return this.First_name;
+        }
+        public string get_Last_name() {
+            return this.Last_name;
+        }
+    }
+    [Serializable]
+    class Bank_Account {
+        string Card_Number, Email, Pin_Code;
+        double Balance ;
+        Person FF = new Person();
+        public Bank_Account() {
+            Card_Number = "";
+            Pin_Code ="";
+            Balance  = 0;
+        }
+        public Bank_Account(string Card_Num, string Pin_Code, double Balance, string Email,  Person P) {
+            setAll(Card_Num, Pin_Code, Balance, Email, P);
+        }
+        public void setAll(string Card_Num, string Pin_Code, double Balance, string Email,  Person P) {
+            this.Card_Number = Card_Num;
+            this.Pin_Code = Pin_Code;
+            this.Balance = Balance;
+            this.Email = Email;
+            FF = P;
+        }
+        public void set_Person(Person p1) {
+            this.FF = FF;
+        }
+        public void set_Card_Number(string Card_Num) {
+            this.Card_Number = Card_Num;
+        }
+        public void set_Pin_Card(string Pin_Code) {
+            this.Pin_Code = Pin_Code;
+        }
+        public void set_Balance(double Balance) {
+            this.Balance = Balance;
+        }
+        public string get_Card_Number() {
+            return this.Card_Number;
+        }
+        public string get_Pin_Code() {
+            return this.Pin_Code;
+        }
+        public double get_Balance() {
+            return this.Balance;
+        }
+        public void set_Email(string Email) {
+            this.Email = Email;
+        }
+        public string get_Email() {
+            return this.Email;
+        }
+        public Person get_Person() {
+            return FF;
+        }
+    }
+    [Serializable]
+    class Bank {
+        Bank_Account[] u;
+        static int c = 0;
+        public Bank() {
+            u = new Bank_Account[10];
+        }
+        public Bank(int capacity) {
+            capacity = capacity < 0 ? 10 : capacity;
+            u = new Bank_Account[capacity];
+        }
+        public void AddBankUser(Bank_Account M) {
+            bool Flg = false;
+            foreach(var i in u) {
+                if(i.get_Card_Number() == M.get_Card_Number()) {
+                    Flg = true;
+                }
+            }
+            if(Flg) {
+                return;
+            }
+            FileStream fi = new FileStream("dat.txt", FileMode.Append, FileAccess.Write);
+            BinaryFormatter bnf = new BinaryFormatter();
+
+            bnf.Serialize(fi, M);
+            u[c] = M;
+            c += 1;
+            fi.Close();
+        }
+        public void load(Bank_Account []M) {
+            int idx = 0;
+            FileStream fi = new FileStream("dat.txt", FileMode.Open, FileAccess.Read);
+            BinaryFormatter bnf = new BinaryFormatter();
+
+            while(fi.Position < fi.Length) {
+                Bank_Account v = (Bank_Account)bf.Deserialize(fi);
+                M[indx] = v;
+                indx++;
+            }
+            fi.Close();
+        }
+        public double CheckBalance(string Card_Number, string Pin_Code) {
+            FileStream fi = new FileStream("dat.txt", FileMode.Open, FileAccess.Read);
+            BinaryFormatter bnf = new BinaryFormatter();
+
+            while(fi.Position < fi.Length) {
+                Bank_Account v = (Bank_Account)bnf.Deserialize(fi);
+                if(v.get_Card_Number() == Card_Number && v.get_Pin_Code() == Pin_Code) {
+                    fi.Close();
+                    return v.get_Balance();
+                }
+            }
+
+            fi.Close();
+            return -1;
+        }
+        public void Deposit(string Card_Num, string Pin_Code, int mon) {
+            bool found = false;
+            foreach(var i in u) {
+                if(i.get_Card_Number() == Card_Num && i.get_Pin_Code() == Pin_Code) {
+                    i.set_Balance(i.get_Balance() + mon);
+                    found = true;
+                    break;
+                }
+            }
+           if(found) {
+              FileStream fi = new FileStream("dat.txt", FileMode.Create, FileAccess.Write);
+              BinaryFormatter bnf = new BinaryFormatter();
+
+              foreach(var i in u) {
+                  bf.Serialize(fi, i);
+              }
+              fi.Close();
+           }else {
+                Console.WriteLine("BankAccount not found");
+            }
+        }
+        public void Withdraw(string Card_Num, int Pin_Code, int mon) {
+            bool found = false;
+            foreach (var i in u) {
+                if (i.get_Card_Number() == Card_Num && i.get_Pin_Code() == Pin_Code) {
+                    if(i.get_Balance() >= mon) {
+                        i.set_Balance(i.get_Balance() - mon);
+                        found = true;
+                        break;
+                    }else {
+                        Console.WriteLine("YOU CAN'T Withdraw ");
+                    }
+                }
+            }
+            if (found) {
+                FileStream fi = new FileStream("dat.txt", FileMode.Create, FileAccess.Write);
+                BinaryFormatter bnf = new BinaryFormatter();
+
+                foreach (var i in u) {
+                    bnf.Serialize(fi, i);
+                }
+                fi.Close();
+            }
+        }
+        public int get_count() {
+            return c;
+        }
+    }
+    class Program {
+        static void Main(string[] ar) {
+            Bank af = new Bank();
+            Person p = new Person("farah", "naeem");
+            Bank_Account check = new Bank_Account("123456789", "1234", 1000, "farah@gmail", p);
+            af.add(check);
+            Console.WriteLine(af.Checking_Account_Balance("123456789", "1234"));
+        }
+    }
+}
+
+        public bool IsBankUser(string Card_num, string Pin_Code) {
+            bool found = false;
+            foreach(var i in u) {
+                if(i.get_Card_Number() == Card_num && i.get_Pin_Code() == Pin_Code) {
+                    found = true;
+                }
+            }
+            return found;
+        }
+public void Load()
+        {
+            List<BankAccount> Loaded = new List<BankAccount>();
+
+            FileStream fi = new FileStream("dat.txt", FileMode.Open, FileAccess.Read);
+            BinaryFormatter bnf = new BinaryFormatter();
+
+            while (fi.Position < fi.Length)
+            {
+                BankAccount obj = (BankAccount)bnf.Deserialize(fi);
+                Loaded.Add(obj);
+            }
+
+            fi.Close();
+        }
+public void Save()
+        {
+            FileStream fi = new FileStream("dat.txt", FileMode.Create, FileAccess.Write);
+            BinaryFormatter bnf = new BinaryFormatter();
+
+            foreach (BankAccount i in u)
+            {
+                bnf.Serialize(fi, i);
+            }
+
+            fi.Close();
+        }
+class Program
+    {
+        static void Main(string[] args)
+        {
+            int bankCapacity = 10;
+            Person pr = new Person();
+
+            string pinCode = "1234";
+            string cardNumber = "12345789";
+            int Balance = 100;
+            BankAccount aa = new BankAccount(pr, "Ahmad@test.com", cardNumber, pinCode, Balance);
+
+
+            Bank testBank = new Bank(Capacity);
+
+            testBank.AddNewAccount(aa);
+
+            testBank.Save();
+
+            Bank newTestBank = new Bank();
+            newTestBank.Load();
+        }
+    }
